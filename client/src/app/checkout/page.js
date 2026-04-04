@@ -5,7 +5,9 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, Loader2, CheckCircle2, CreditCard, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-export default function CheckoutPage() {
+import { Suspense } from 'react';
+
+function CheckoutContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const amount = searchParams.get('amount') || '0';
@@ -30,7 +32,7 @@ export default function CheckoutPage() {
                     </button>
                     <div className="flex flex-col items-center">
                         <ShieldCheck size={48} className="mb-4" />
-                        <h1 className="text-2xl font-bold text-center">GigShield Secure Checkout</h1>
+                        <h1 className="text-2xl font-bold text-center">IncomeShield AI Secure Checkout</h1>
                         <p className="text-blue-100 text-sm mt-1 uppercase tracking-widest font-bold">Razorpay Integrated</p>
                     </div>
                 </div>
@@ -113,5 +115,17 @@ export default function CheckoutPage() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-6">
+                <Loader2 size={48} className="text-blue-600 animate-spin" />
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     );
 }
