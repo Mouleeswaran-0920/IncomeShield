@@ -3,6 +3,8 @@ import React, { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import CheckoutForm from '@/components/CheckoutForm';
 
+export const dynamic = 'force-dynamic';
+
 export default function CheckoutPage() {
     return (
         <Suspense fallback={
