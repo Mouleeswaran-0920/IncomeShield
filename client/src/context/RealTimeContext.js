@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
-const RealTimeContext = createContext();
+const RealTimeContext = createContext({ envData: { rain: 0, aqi: 0, traffic: 0, alert: "NONE", source: "INITIALIZING" }, socket: null });
 
 export const RealTimeProvider = ({ children }) => {
     const [envData, setEnvData] = useState({
