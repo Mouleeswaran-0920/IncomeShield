@@ -24,8 +24,10 @@ const io = socketIo(server, {
     }
 });
 
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
+
+app.get("/api/test", (req, res) => res.json({ status: "ok", service: "IncomeShield Backend" }));
 
 // Routes
 const authRoutes = require('./routes/auth');
