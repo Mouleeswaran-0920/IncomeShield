@@ -11,11 +11,11 @@ router.get('/weekly-stats/:userId', async (req, res) => {
     }
 });
 
-router.post('/initiate-payment', async (req, res) => {
+router.post('/process-payout', async (req, res) => {
     try {
-        const { amount, userId } = req.body;
-        const payment = await paymentService.initiateRazorpayPayment(amount, userId);
-        res.json(payment);
+        const { userId, environmentalData } = req.body;
+        const result = await paymentService.processParametricPayout(userId, environmentalData);
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

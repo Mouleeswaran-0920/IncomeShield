@@ -12,15 +12,16 @@ import {
   History,
   Info
 } from 'lucide-react';
+import axios from 'axios';
 import { useRealTime } from '@/context/RealTimeContext';
 import { useToast } from '@/context/ToastContext';
 import RiskGauge from '@/components/RiskGauge';
 import IncomeChart from '@/components/IncomeChart';
 import { formatCurrency, cn } from '@/lib/utils';
-import { CardSkeleton, TableSkeleton } from '@/components/Skeleton';
+import { Skeleton, CardSkeleton, TableSkeleton } from '@/components/Skeleton';
 
 export default function Dashboard() {
-  const { envData, riskData, alerts, lastPayout } = useRealTime();
+  const { city, setCity, envData, riskData, alerts, payoutStatus, loading: contextLoading } = useRealTime();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -30,24 +31,38 @@ export default function Dashboard() {
     dailyLoss: 450
   });
 
+  const cities = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata'];
+
   useEffect(() => {
     // Simulate initial loading
-    setTimeout(() => setLoading(false), 1500);
-  }, []);
+    if (!contextLoading) {
+      setTimeout(() => setLoading(false), 800);
+    }
+  }, [contextLoading]);
 
   useEffect(() => {
-    if (alerts.length > 0 && alerts[0].severity === 'CRITICAL') {
-        addToast(alerts[0].message, 'error');
-    }
-  }, [alerts, addToast]);
+    const fetchDashboardStats = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const res = await axios.get(`${API_URL}/api/admin/overview`);
+        setStats(prev => ({
+          ...prev,
+          totalPayouts: res.data.totalPayouts,
+          activeClaims: res.data.activeClaims,
+        }));
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats', err);
+      }
+    };
+    fetchDashboardStats();
+  }, [payoutStatus]);
 
   useEffect(() => {
-    if (lastPayout) {
-        addToast(`Payout of ${formatCurrency(lastPayout.amount)} processed!`, 'success');
+    if (payoutStatus?.payoutTriggered) {
+        addToast(`Disruption Payout of ${formatCurrency(payoutStatus.payout.amount)} PROCESSED!`, 'success');
     }
-  }, [lastPayout, addToast]);
+  }, [payoutStatus, addToast]);
 
-  // Mock chart data
   const chartData = [
     { name: '08:00', predicted: 120, actual: 110 },
     { name: '10:00', predicted: 180, actual: 165 },
@@ -58,6 +73,40 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Dashboard Top Header with City Switcher */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-dark p-6 rounded-[2.5rem] border border-white/5">
+        <div>
+          <h2 className="text-xl font-black gradient-text">Operational Intel</h2>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Real-time parametric monitoring</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-slate-400">Current Node:</span>
+          <div className="flex gap-1 p-1 bg-white/5 rounded-2xl border border-white/10">
+            {cities.slice(0, 3).map(c => (
+              <button
+                key={c}
+                onClick={() => setCity(c)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black transition-all",
+                  city === c ? "bg-primary text-white glow-primary" : "text-slate-500 hover:text-white"
+                )}
+              >
+                {c}
+              </button>
+            ))}
+            <select 
+              className="bg-transparent text-xs font-black px-2 outline-none text-slate-400"
+              onChange={(e) => setCity(e.target.value)}
+              value={cities.includes(city) ? city : ""}
+            >
+              <option value="" disabled>Others</option>
+              {cities.slice(3).map(c => <option key={c} value={c} className="bg-[#020617]">{c}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* Top Banner for Alerts */}
       <AnimatePresence>
         {alerts.length > 0 && (
@@ -67,17 +116,18 @@ export default function Dashboard() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 animate-pulse">
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-4 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+              <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-500/20 animate-pulse">
                 <AlertTriangle size={20} />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">Disruption Active</h3>
-                <p className="text-sm text-slate-400">{alerts[0].message}</p>
+                <h3 className="text-sm font-black text-red-500 uppercase tracking-tighter">Parametric Disruption Detected</h3>
+                <p className="text-sm text-slate-400 font-medium">{alerts[0].message}</p>
               </div>
-              <button className="px-4 py-2 rounded-xl bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors">
-                View Details
-              </button>
+              <div className="text-right">
+                <p className="text-[10px] font-black text-slate-500 uppercase">Live Risk Index</p>
+                <p className="text-lg font-black text-red-500">{(riskData.riskScore * 100).toFixed(0)}%</p>
+              </div>
             </div>
           </motion.div>
         )}
@@ -153,8 +203,8 @@ export default function Dashboard() {
             </div>
             <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
               <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Precipitation</p>
-              <p className={cn("text-lg font-black", (envData.rain > 50 ? "text-red-500" : "text-blue-500"))}>
-                {envData.rain || 0}%
+              <p className={cn("text-lg font-black", (envData.rain > 10 ? "text-red-500" : "text-blue-500"))}>
+                {envData.rain || 0} <span className="text-[10px] font-bold text-slate-500">mm/h</span>
               </p>
             </div>
           </div>

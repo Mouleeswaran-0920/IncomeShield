@@ -42,6 +42,7 @@ app.use('/api/ai', require('./routes/ai'));
 app.use('/api/disaster', require('./routes/disaster'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/user', require('./routes/user'));
+app.use('/api/data', require('./routes/data'));
 
 app.get('/api/simulated-environment', async (req, res) => {
     const data = await simulationService.getEnvironmentData();

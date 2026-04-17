@@ -25,7 +25,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-8">
            <Link href="/about" className="hidden md:block text-sm font-bold text-slate-400 hover:text-white transition-colors">How it works</Link>
-           <Link href="/dashboard" className="bg-white/10 hover:bg-white/15 px-6 py-2.5 rounded-xl text-sm font-bold border border-white/10 transition-all flex items-center gap-2">
+           <Link href="/auth/login" className="bg-white/10 hover:bg-white/15 px-6 py-2.5 rounded-xl text-sm font-bold border border-white/10 transition-all flex items-center gap-2">
               Launch Console <ArrowRight size={16} />
            </Link>
         </div>
@@ -53,7 +53,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
-            <Link href="/dashboard" className="bg-primary text-white px-12 py-6 rounded-2xl font-black text-lg shadow-2xl shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] transition-all flex items-center gap-3 group">
+            <Link href="/auth/login" className="bg-primary text-white px-12 py-6 rounded-2xl font-black text-lg shadow-2xl shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] transition-all flex items-center gap-3 group">
               Get Started Now <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <p className="text-slate-500 text-sm font-medium">Trusted by 10,000+ driver partners across India</p>

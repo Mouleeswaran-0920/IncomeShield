@@ -21,6 +21,10 @@
   --input: #e2e8f0;
   --ring: #2563eb;
   --radius: 0.75rem;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-dark-bg: rgba(241, 245, 249, 0.8);
+  --glass-dark-border: rgba(0, 0, 0, 0.05);
 }
 
 .dark {
@@ -43,6 +47,10 @@
   --border: #1e293b;
   --input: #1e293b;
   --ring: #3b82f6;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-dark-bg: rgba(15, 23, 42, 0.6);
+  --glass-dark-border: rgba(255, 255, 255, 0.05);
 }
 
 @theme inline {
@@ -56,20 +64,26 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease;
+}
+
+/* Ensure glass components also transition */
+.glass, .glass-dark {
+  transition: background-color 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.05));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--glass-dark-bg, rgba(15, 23, 42, 0.6));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-dark-border, rgba(255, 255, 255, 0.05));
 }
 
 .glow-primary {
