@@ -17,6 +17,7 @@ export const metadata = {
 };
 
 import { Providers } from "./providers";
+import Script from "next/script";
 
 export default function RootLayout({ children }) {
   return (
@@ -28,6 +29,10 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
         </Providers>
+        <Script 
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

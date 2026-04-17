@@ -24,12 +24,18 @@ export default function Dashboard() {
   const { city, setCity, envData, riskData, alerts, payoutStatus, loading: contextLoading } = useRealTime();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({ role: 'USER', avg_daily_income: 800 });
   const [stats, setStats] = useState({
     totalPayouts: 12450,
     activeClaims: 3,
     protectionScore: 88,
     dailyLoss: 450
   });
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) setUser(JSON.parse(storedUser));
+  }, []);
 
   const cities = ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata'];
 
@@ -62,6 +68,47 @@ export default function Dashboard() {
         addToast(`Disruption Payout of ${formatCurrency(payoutStatus.payout.amount)} PROCESSED!`, 'success');
     }
   }, [payoutStatus, addToast]);
+
+  const handlePayment = async () => {
+    try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const { data: order } = await axios.post(`${API_URL}/api/payments/create-order`, {
+            amount: 49,
+            currency: 'INR',
+            receipt: `sub_${user.role}_${Date.now()}`
+        });
+
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_YourKeyHere',
+            amount: order.amount,
+            currency: order.currency,
+            name: "IncomeShield AI",
+            description: "Premium Coverage Subscription",
+            order_id: order.id,
+            handler: async (response) => {
+                const verifyRes = await axios.post(`${API_URL}/api/payments/verify`, response);
+                if (verifyRes.data.success) {
+                    addToast('Premium Activated Successfully!', 'success');
+                } else {
+                    addToast('Payment Verification Failed', 'error');
+                }
+            },
+            prefill: {
+                name: user.name,
+                contact: user.phone
+            },
+            theme: {
+                color: "#3b82f6"
+            }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    } catch (err) {
+        console.error('Payment Failed', err);
+        addToast('Initiating Payment Failed', 'error');
+    }
+  };
 
   const chartData = [
     { name: '08:00', predicted: 120, actual: 110 },
@@ -176,6 +223,88 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {user.role === 'USER' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Loss Analytics Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-dark p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden"
+            >
+                <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-black text-white flex items-center gap-3">
+                            <Activity className="text-red-500" size={24} />
+                            Real-Time Loss Analytics
+                        </h3>
+                        <div className="px-3 py-1 bg-red-500/10 text-red-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-500/20">
+                            Leakage Detected
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-8">
+                        <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Hourly Loss Impact</p>
+                            <p className="text-4xl font-black text-white">
+                                ₹{((envData.rain * 5) + ((envData.traffic || 70) * 0.2) + ((envData.aqi || 100) * 0.1)).toFixed(2)}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+                                Calculated based on current environmental friction in <span className="text-primary font-bold">{city}</span>.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500">Traffic Friction</span>
+                                <span className="text-amber-500 font-bold">₹{(envData.traffic * 0.2).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500">Weather Delay</span>
+                                <span className="text-blue-400 font-bold">₹{(envData.rain * 5).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500">AQI Penalty</span>
+                                <span className="text-emerald-400 font-bold">₹{(envData.aqi * 0.1).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="absolute right-0 bottom-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl" />
+            </motion.div>
+
+            {/* Premium Upgrade Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-gradient-to-br from-primary to-blue-700 p-8 rounded-[2.5rem] relative overflow-hidden group cursor-pointer"
+            >
+                <div className="relative z-10 flex h-full flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                <ShieldCheck className="text-white" size={20} />
+                            </div>
+                            <h3 className="text-xl font-black text-white">IncomeShield Premium</h3>
+                        </div>
+                        <p className="text-blue-100 text-sm font-medium leading-relaxed max-w-[280px]">
+                            Unlock 100% loss coverage and priority automated payouts during heavy disaster modes.
+                        </p>
+                    </div>
+                    
+                    <button 
+                        onClick={handlePayment}
+                        className="mt-8 py-4 bg-white text-primary rounded-2xl font-black text-sm transition-transform active:scale-95 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                    >
+                        Upgrade for ₹49/month
+                    </button>
+                </div>
+                {/* Decorative Elements */}
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+                <ArrowUpRight className="absolute top-8 right-8 text-white/40 group-hover:text-white transition-colors" size={32} />
+            </motion.div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Risk Analysis & Gauge */}

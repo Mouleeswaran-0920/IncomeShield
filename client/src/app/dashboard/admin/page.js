@@ -18,6 +18,7 @@ import axios from 'axios';
 import { formatCurrency, cn } from '@/lib/utils';
 
 export default function AdminPanel() {
+  const [isAdmin, setIsAdmin] = useState(false);
   const [overview, setOverview] = useState({
     totalPayouts: 0,
     activeClaims: 0,
@@ -27,8 +28,56 @@ export default function AdminPanel() {
   });
   const [claims, setClaims] = useState([]);
   const [heatmap, setHeatmap] = useState([]);
+  const [user, setUser] = useState({ name: 'Admin', phone: '' });
 
   useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (storedUser.role === 'ADMIN') {
+      setIsAdmin(true);
+      setUser(storedUser);
+    }
+  }, []);
+
+  const handleRecharge = async () => {
+    try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const { data: order } = await axios.post(`${API_URL}/api/payments/create-order`, {
+            amount: 1000,
+            currency: 'INR',
+            receipt: `recharge_admin_${Date.now()}`
+        });
+
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_YourKeyHere',
+            amount: order.amount,
+            currency: order.currency,
+            name: "IncomeShield AI",
+            description: "System Reserve Recharge",
+            order_id: order.id,
+            handler: async (response) => {
+                const verifyRes = await axios.post(`${API_URL}/api/payments/verify`, response);
+                if (verifyRes.data.success) {
+                    alert('Reserve Recharged Successfully!');
+                }
+            },
+            prefill: {
+                name: user.name,
+                contact: user.phone
+            },
+            theme: {
+                color: "#10b981"
+            }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    } catch (err) {
+        console.error('Recharge Failed', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
     const fetchAdminData = async () => {
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -47,6 +96,20 @@ export default function AdminPanel() {
     fetchAdminData();
   }, []);
 
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="w-20 h-20 rounded-3xl bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
+          <ShieldAlert size={40} />
+        </div>
+        <div className="text-center">
+          <h2 className="text-2xl font-black text-white">Access Restricted</h2>
+          <p className="text-slate-500 mt-2">Only system administrators can access this terminal.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -55,6 +118,13 @@ export default function AdminPanel() {
           <p className="text-slate-400">Holistic view of system performance and payouts.</p>
         </div>
         <div className="flex gap-4">
+          <button 
+            onClick={handleRecharge}
+            className="flex items-center gap-2 px-6 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-emerald-600 transition-all"
+          >
+            <IndianRupee size={18} />
+            Recharge Reserve
+          </button>
           <button className="flex items-center gap-2 px-4 py-2 glass rounded-xl text-sm font-bold border border-white/5 hover:bg-white/5 transition-all">
             <Download size={18} />
             Export Audit Logs

@@ -9,25 +9,47 @@ import axios from 'axios';
 import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
-    const [formData, setFormData] = useState({ username: '', phone: '', password: '' });
+    const [formData, setFormData] = useState({ username: '', phone: '', password: '', role: 'USER' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [phoneError, setPhoneError] = useState(false);
     const router = useRouter();
+
+    const handlePhoneChange = (val) => {
+        const cleaned = val.slice(0, 10);
+        setFormData({ ...formData, phone: cleaned });
+        if (cleaned.length > 0 && cleaned.length !== 10) {
+            setPhoneError(true);
+        } else {
+            setPhoneError(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (formData.phone.length !== 10) {
+            setError('Mobile number must be exactly 10 digits.');
+            return;
+        }
+
+        if (formData.password.length !== 6) {
+            setError('Vault Key must be exactly 6 characters.');
+            return;
+        }
+
         setLoading(true);
         setError('');
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const res = await axios.post(`${API_URL}/api/auth/login`, formData);
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify({ ...res.data.user, name: formData.username }));
-
+            const userToStore = res.data.user || { name: formData.username, phone: formData.phone, role: formData.role };
+            localStorage.setItem('user', JSON.stringify(userToStore));
             router.push('/dashboard');
         } catch (err) {
             // Since it's a mock for now, we'll allow login with any data
-            localStorage.setItem('user', JSON.stringify({ name: formData.username, phone: formData.phone }));
+            const fallbackUser = { name: formData.username, phone: formData.phone, role: formData.role };
+            localStorage.setItem('user', JSON.stringify(fallbackUser));
             router.push('/dashboard');
         } finally {
             setLoading(false);
@@ -74,6 +96,37 @@ export default function LoginPage() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Access Portal (Role Selector) Moved to Top */}
+                        <div className="space-y-3">
+                            <label className="text-xs font-black text-amber-400 uppercase tracking-[0.2em] ml-2">Access Portal</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, role: 'USER' })}
+                                    className={cn(
+                                        "py-4 rounded-2xl border font-bold transition-all",
+                                        formData.role === 'USER' 
+                                            ? "bg-primary/20 border-primary text-white glow-primary" 
+                                            : "glass border-white/10 text-slate-500 hover:text-slate-300"
+                                    )}
+                                >
+                                    Gig Worker
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, role: 'ADMIN' })}
+                                    className={cn(
+                                        "py-4 rounded-2xl border font-bold transition-all",
+                                        formData.role === 'ADMIN' 
+                                            ? "bg-purple-600/20 border-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)]" 
+                                            : "glass border-white/10 text-slate-500 hover:text-slate-300"
+                                    )}
+                                >
+                                    Admin Panel
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Username Field */}
                         <div className="space-y-3">
                             <label className="text-xs font-black text-primary uppercase tracking-[0.2em] ml-2">Display Name</label>
@@ -92,19 +145,28 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        {/* Phone Field */}
+                        {/* Phone Field with Validation Logic */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-purple-400 uppercase tracking-[0.2em] ml-2">Mobile Anchor</label>
+                            <div className="flex justify-between items-center ml-2">
+                                <label className="text-xs font-black text-purple-400 uppercase tracking-[0.2em]">Mobile Anchor</label>
+                                {phoneError && <span className="text-[10px] font-black text-red-500 uppercase animate-bounce">Require Exactly 10 Digits</span>}
+                            </div>
                             <div className="relative group">
-                                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-emerald-500/20 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                                <div className={cn(
+                                    "absolute inset-0 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity",
+                                    phoneError ? "bg-red-500/20" : "bg-gradient-to-r from-purple-600/20 to-emerald-500/20"
+                                )} />
                                 <div className="relative flex items-center">
-                                   <Phone className="absolute left-5 text-slate-500 group-focus-within:text-white transition-colors" size={20} />
+                                   <Phone className={cn("absolute left-5 transition-colors", phoneError ? "text-red-500" : "text-slate-500 group-focus-within:text-white")} size={20} />
                                    <input
-                                       type="text"
+                                       type="number"
                                        required
-                                       placeholder="+91 Registered Number"
-                                       className="w-full pl-14 pr-6 py-5 bg-white/5 border border-white/10 rounded-2xl focus:bg-white/10 focus:border-purple-500/50 transition-all outline-none text-white font-bold placeholder:text-slate-600"
-                                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                       placeholder="10-Digit Mobile Number"
+                                       className={cn(
+                                           "w-full pl-14 pr-6 py-5 bg-white/5 border rounded-2xl focus:bg-white/10 transition-all outline-none text-white font-bold placeholder:text-slate-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                                           phoneError ? "border-red-500/50" : "border-white/10 focus:border-purple-500/50"
+                                       )}
+                                       onChange={(e) => handlePhoneChange(e.target.value)}
                                    />
                                 </div>
                             </div>
@@ -112,17 +174,29 @@ export default function LoginPage() {
 
                         {/* Password Field */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-emerald-400 uppercase tracking-[0.2em] ml-2">Vault Key</label>
+                            <div className="flex justify-between items-center ml-2">
+                                <label className="text-xs font-black text-emerald-400 uppercase tracking-[0.2em]">Vault Key</label>
+                                {formData.password.length > 0 && formData.password.length !== 6 && (
+                                    <span className="text-[10px] font-black text-red-500 uppercase animate-pulse">Required Exactly 6 Chars</span>
+                                )}
+                            </div>
                             <div className="relative group">
-                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-primary/20 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                                <div className={cn(
+                                    "absolute inset-0 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity",
+                                    formData.password.length > 0 && formData.password.length !== 6 ? "bg-red-500/20" : "bg-gradient-to-r from-emerald-500/20 to-primary/20"
+                                )} />
                                 <div className="relative flex items-center">
-                                   <Lock className="absolute left-5 text-slate-500 group-focus-within:text-white transition-colors" size={20} />
+                                   <Lock className={cn("absolute left-5 transition-colors", formData.password.length > 0 && formData.password.length !== 6 ? "text-red-500" : "text-slate-500 group-focus-within:text-white")} size={20} />
                                    <input
                                        type="password"
                                        required
-                                       placeholder="••••••••••••"
-                                       className="w-full pl-14 pr-6 py-5 bg-white/5 border border-white/10 rounded-2xl focus:bg-white/10 focus:border-emerald-500/50 transition-all outline-none text-white font-bold placeholder:text-slate-600"
-                                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                       placeholder="••••••"
+                                       className={cn(
+                                           "w-full pl-14 pr-6 py-5 bg-white/5 border rounded-2xl focus:bg-white/10 transition-all outline-none text-white font-bold placeholder:text-slate-600",
+                                           formData.password.length > 0 && formData.password.length !== 6 ? "border-red-500/50" : "border-white/10 focus:border-emerald-500/50"
+                                       )}
+                                       onChange={(e) => setFormData({ ...formData, password: e.target.value.slice(0, 6) })}
+                                       value={formData.password}
                                    />
                                 </div>
                             </div>

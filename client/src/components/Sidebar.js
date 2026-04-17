@@ -16,9 +16,11 @@ import {
   ChevronLeft, 
   ChevronRight,
   User as UserIcon,
-  ShieldAlert
+  ShieldAlert,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -36,6 +38,7 @@ const menuItems = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState({ name: 'Partner', phone: '' });
 
   React.useEffect(() => {
@@ -44,6 +47,11 @@ export default function Sidebar() {
       setUser(JSON.parse(storedUser));
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/auth/login');
+  };
 
   return (
     <motion.div
@@ -82,7 +90,17 @@ export default function Sidebar() {
 
       {/* Navigation Items */}
       <nav className="flex-1 px-4 space-y-3 py-6 overflow-y-auto no-scrollbar">
-        {menuItems.map((item) => {
+        {menuItems
+          .filter(item => {
+            if (user.role === 'ADMIN') {
+              // Admin sees everything including Claims & Payouts
+              return true;
+            } else {
+              // Gig Worker sees everything except Admin Panel and Fraud Insights
+              return item.id !== 'admin' && item.id !== 'fraud'; 
+            }
+          })
+          .map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.id} href={item.href}>
@@ -120,21 +138,32 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile Section */}
-      <div className="p-4 border-t border-white/5 mb-4">
+      <div className="p-4 border-t border-white/5 mb-4 space-y-2">
         <div className={cn(
-          "flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group",
+          "flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all group",
           collapsed ? "justify-center" : ""
         )}>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-blue-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             <UserIcon className="text-white w-5 h-5" />
           </div>
           {!collapsed && (
-            <div className="overflow-hidden">
+            <div className="overflow-hidden flex-1">
               <p className="font-black text-xs tracking-tight truncate uppercase text-slate-300 group-hover:text-white">{user.name}</p>
               <p className="text-[10px] text-slate-500 truncate uppercase font-bold tracking-widest">{user.phone || 'Partner'}</p>
             </div>
           )}
         </div>
+
+        <button 
+          onClick={handleLogout}
+          className={cn(
+            "w-full flex items-center gap-3 p-4 rounded-2xl text-red-500 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20",
+            collapsed ? "justify-center" : ""
+          )}
+        >
+          <LogOut size={20} />
+          {!collapsed && <span className="font-bold text-sm">Logout Session</span>}
+        </button>
       </div>
     </motion.div>
   );

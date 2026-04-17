@@ -1,11 +1,12 @@
 Pitch Deck Link = https://docs.google.com/presentation/d/18AIJ2NEdmcL_ZuxnpzQpVZyDqJ-Yo2t-/edit?usp=sharing&ouid=107625543254439871507&rtpof=true&sd=true
 # IncomeShield AI
 
+
 IncomeShield AI is a production-ready, AI-powered parametric income protection platform for gig workers in India. It automatically detects disruptions (weather, AQI, traffic), predicts income loss, and triggers automatic payouts.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, Tailwind CSS, Framer Motion, Recharts, Mapbox GL JS.
+- **Frontend**: Next.js 16, Tailwind CSS, Framer Motion, Recharts, Mapbox GL JS.
 - **Backend**: Node.js, Express, WebSocket (Socket.io), PostgreSQL (Sequelize), Redis.
 - **AI Service**: Python FastAPI, scikit-learn, pandas, numpy.
 
