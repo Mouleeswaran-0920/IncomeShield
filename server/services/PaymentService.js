@@ -35,7 +35,35 @@ class PaymentService {
             orderId,
             amount,
             currency: 'INR',
-            status: 'INITIATED'
+            status: 'INITIATED',
+            timestamp: new Date()
+        };
+    }
+
+    async processProgressivePayout(claimId) {
+        const claim = await Claim.findByPk(claimId);
+        if (!claim) throw new Error('Claim not found');
+
+        // 50% Instant Payout
+        const instantAmount = claim.payout * 0.5;
+        const remainder = claim.payout - instantAmount;
+
+        const transaction = {
+            id: 'TXN_' + Math.random().toString(36).substr(2, 12),
+            claimId,
+            amount: instantAmount,
+            status: 'SUCCESS',
+            progressive: true,
+            type: 'INSTANT_50'
+        };
+
+        claim.status = 'PARTIALLY_PAID';
+        await claim.save();
+
+        return {
+            success: true,
+            transaction,
+            remainder
         };
     }
 }

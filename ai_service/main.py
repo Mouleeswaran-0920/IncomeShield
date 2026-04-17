@@ -87,18 +87,78 @@ class AIModels:
 
 models = AIModels()
 
-@app.post("/predict-risk")
-async def predict_risk(env: EnvironmentData):
+@app.post("/risk-score")
+async def get_risk_score(env: EnvironmentData):
     score = models.predict_risk(env)
-    return {"risk_score": score}
+    
+    # Factor breakdown for Explainable AI
+    factors = {
+        "rain": round(env.rain / 100 * 0.2, 2),
+        "aqi": round(env.aqi / 300 * 0.2, 2),
+        "traffic": round(env.traffic / 100 * 0.2, 2),
+        "strike": round(env.strike / 100 * 0.4, 2)
+    }
+    
+    # Human-readable explanation
+    sorted_factors = sorted(factors.items(), key=lambda x: x[1], reverse=True)
+    top_factor = sorted_factors[0][0]
+    explanation = f"High {top_factor} is the main contributor to your risk score."
+    if score > 0.7:
+        explanation = f"Critical risk detected! {top_factor.capitalize()} is extremely high."
+    elif score < 0.3:
+        explanation = "Environmental conditions are stable and safe."
+
+    return {
+        "riskScore": score,
+        "factors": factors,
+        "explanation": explanation
+    }
 
 @app.post("/predict-income")
 async def predict_income(data: IncomeData):
     income = models.predict_income(data)
-    return {"expected_income": income}
+    # Return more details for analytics
+    return {
+        "expectedIncome": income,
+        "confidence": 0.85,
+        "factors": {
+            "historical_avg": round(np.mean(data.user_history) if data.user_history else 800, 2),
+            "environmental_penalty": round(1.0 - (income / (np.mean(data.user_history) if data.user_history else 800)), 2)
+        }
+    }
+
+@app.post("/fraud-score")
+async def get_fraud_score(data: FraudData):
+    # More sophisticated fraud scoring
+    drop_percentage = (data.avg_deliveries - data.deliveries) / data.avg_deliveries if data.avg_deliveries > 0 else 0
+    
+    # 0 to 1 score
+    fraud_score = 0.0
+    if drop_percentage > 0.7:
+        fraud_score = 0.85
+    elif drop_percentage > 0.5:
+        fraud_score = 0.6
+    else:
+        fraud_score = 0.15
+        
+    risk_level = "LOW"
+    if fraud_score > 0.7:
+        risk_level = "HIGH"
+    elif fraud_score > 0.4:
+        risk_level = "MEDIUM"
+        
+    return {
+        "fraudScore": fraud_score,
+        "riskLevel": risk_level,
+        "details": {
+            "delivery_drop": round(drop_percentage * 100, 2),
+            "pattern_anomaly": "detected" if fraud_score > 0.5 else "none"
+        }
+    }
 
 @app.post("/detect-fraud")
-async def detect_fraud(data: FraudData):
+async def detect_fraud_legacy(data: FraudData):
+    # Keeping for backward compatibility
     is_fraud = models.detect_fraud(data)
     return {"is_fraud": is_fraud, "trust_score": 0.2 if is_fraud else 0.9}
 

@@ -2,18 +2,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
-const DEFAULT_ENV_DATA = {
-    rain: 0,
-    aqi: 0,
-    traffic: 0,
-    alert: "NONE",
-    source: "INITIALIZING"
-};
-
-const RealTimeContext = createContext({ envData: DEFAULT_ENV_DATA, socket: null });
+const RealTimeContext = createContext();
 
 export const RealTimeProvider = ({ children }) => {
-    const [envData, setEnvData] = useState(DEFAULT_ENV_DATA);
+    const [envData, setEnvData] = useState({
+        rain: 0,
+        aqi: 0,
+        traffic: 0,
+        alert: "NONE",
+        source: "INITIALIZING"
+    });
+    const [riskData, setRiskData] = useState({ score: 0, timestamp: null });
+    const [alerts, setAlerts] = useState([]);
+    const [lastPayout, setLastPayout] = useState(null);
     const [socket, setSocket] = useState(null);
 
     useEffect(() => {
@@ -25,11 +26,23 @@ export const RealTimeProvider = ({ children }) => {
             setEnvData(data);
         });
 
+        newSocket.on('risk:update', (data) => {
+            setRiskData(data);
+        });
+
+        newSocket.on('disruption:alert', (alert) => {
+            setAlerts(prev => [alert, ...prev].slice(0, 10));
+        });
+
+        newSocket.on('payout:processed', (payout) => {
+            setLastPayout(payout);
+        });
+
         return () => newSocket.close();
     }, []);
 
     return (
-        <RealTimeContext.Provider value={{ envData, socket }}>
+        <RealTimeContext.Provider value={{ envData, riskData, alerts, lastPayout, socket }}>
             {children}
         </RealTimeContext.Provider>
     );

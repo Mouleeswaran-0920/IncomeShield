@@ -1,69 +1,104 @@
 "use client";
+
+import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Shield, ArrowRight, Zap, CloudRain, BarChart3 } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Zap, CloudRain, Activity, BrainCircuit } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100">
-      <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-primary/30 overflow-x-hidden">
+      {/* Abstract Background Decorations */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[150px]" />
+      </div>
+
+      <nav className="relative z-10 p-8 flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
-          <div className="bg-blue-600 p-2 rounded-lg text-white">
-            <Shield size={24} />
+          <div className="bg-primary p-2 rounded-xl text-white glow-primary">
+            <ShieldCheck size={28} />
           </div>
-          <span className="text-xl font-bold tracking-tight">GigShield AI</span>
+          <span className="text-2xl font-black tracking-tighter gradient-text">IncomeShield AI</span>
         </div>
-        <Link href="/dashboard" className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
-          Go to Dashboard <ArrowRight size={16} />
-        </Link>
+        <div className="flex items-center gap-8">
+           <Link href="/about" className="hidden md:block text-sm font-bold text-slate-400 hover:text-white transition-colors">How it works</Link>
+           <Link href="/dashboard" className="bg-white/10 hover:bg-white/15 px-6 py-2.5 rounded-xl text-sm font-bold border border-white/10 transition-all flex items-center gap-2">
+              Launch Console <ArrowRight size={16} />
+           </Link>
+        </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-20 text-center">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <span className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider mb-6 inline-block">
-            AI-Powered Parametric Insurance
-          </span>
-          <h1 className="text-6xl font-extrabold tracking-tighter mb-8 md:text-7xl">
-            Income Protection for the <br />
-            <span className="text-blue-600">Gig Economy</span>
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-primary/20 mb-10">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            Empowering the modern workforce
+          </div>
+          
+          <h1 className="text-6xl font-black tracking-tighter mb-8 md:text-8xl leading-[0.9]">
+            Instant Protection for <br />
+            <span className="gradient-text">Gig Earnings.</span>
           </h1>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-12 leading-relaxed">
-            GigShield AI detects weather, traffic, and AQI disruptions in real-time,
-            predicts your income loss, and triggers automatic payouts. No claims, no paperwork.
+          
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-16 leading-relaxed">
+            The world's first AI-powered parametric platform that detects disruptions 
+            and triggers automatic payouts. No claims. No waiting. Just security.
           </p>
 
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <Link href="/dashboard" className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2">
-              Launch Dashboard <Zap size={20} />
+          <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+            <Link href="/dashboard" className="bg-primary text-white px-12 py-6 rounded-2xl font-black text-lg shadow-2xl shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] transition-all flex items-center gap-3 group">
+              Get Started Now <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="bg-gray-50 text-gray-900 border border-gray-100 px-10 py-5 rounded-2xl font-bold hover:bg-gray-100 transition-all">
-              Learn How It Works
-            </button>
+            <p className="text-slate-500 text-sm font-medium">Trusted by 10,000+ driver partners across India</p>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-32 text-left">
-          <Feature icon={CloudRain} title="Disruption Detection" desc="Automatic weather and traffic monitoring using real-time API feeds." />
-          <Feature icon={Zap} title="Instant Payouts" desc="Calculated by AI models and triggered automatically to your account." />
-          <Feature icon={BarChart3} title="Income Prediction" desc="Precision regression models to forecast expected daily earnings." />
+        {/* Feature Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-40">
+          <Feature 
+            icon={Activity} 
+            title="Real-time Telemetry" 
+            desc="Continuous monitoring of weather, AQI, and traffic density via hyper-local APIs." 
+          />
+          <Feature 
+            icon={BrainCircuit} 
+            title="Predictive AI" 
+            desc="Proprietary regression models to forecast expected earnings with high precision." 
+          />
+          <Feature 
+            icon={Zap} 
+            title="Parametric Payouts" 
+            desc="Automated settlements triggered instantly when environmental thresholds are breached." 
+          />
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/5 py-12 text-center text-slate-600 text-sm font-medium">
+         © 2026 IncomeShield AI. Built for the future of work.
+      </footer>
     </div>
   );
 }
 
 function Feature({ icon: Icon, title, desc }) {
   return (
-    <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100 hover:border-blue-100 transition-colors">
-      <div className="bg-white w-12 h-12 rounded-xl flex items-center justify-center text-blue-600 shadow-sm mb-6">
-        <Icon size={24} />
+    <motion.div 
+      whileHover={{ y: -10 }}
+      className="p-10 glass-dark rounded-[2.5rem] border border-white/5 text-left group hover:border-primary/30 transition-all"
+    >
+      <div className="bg-primary/10 w-14 h-14 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all mb-8">
+        <Icon size={28} />
       </div>
-      <h3 className="text-lg font-bold mb-2">{title}</h3>
-      <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
-    </div>
+      <h3 className="text-xl font-bold mb-4">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+    </motion.div>
   );
 }
